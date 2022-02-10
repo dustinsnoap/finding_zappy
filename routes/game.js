@@ -4,10 +4,10 @@ var Hash = require('md5')
 const players = {}
 const customerPlayerMap = {}
 const zappyMap = {
-    "zade1d": {"name": "common", "value": 1},
-    "z48106": {"name": "uncommon", "value": 3},
-    "z780cd": {"name": "rare", "value": 5},
-    "z412a3": {"name": "legendary", "value": 10},
+    // "zade1d": {"name": "common", "value": 1},
+    // "z48106": {"name": "uncommon", "value": 3},
+    // "z780cd": {"name": "rare", "value": 5},
+    // "z412a3": {"name": "legendary", "value": 10},
 }
 const zappyIds = ["zade1d", "z48106","z780cd","z412a3"]
 //
@@ -140,11 +140,11 @@ const addZappy = (req, res) => {
     const zappyName = req.body.name
     const zappyImgUrl = req.body.imgUrl
     const zappyValue = req.body.value
-    const zappyId = req.body.zappyId ? req.body.zappyId : "z" + Hash(zappyName + zappyImgUrl + zappyValue).substring(0,9)
+    const zappyId = zappyIds.length
     if(zappyId in zappyMap) {res.status(648).send(`We have enough ${zappyName}'s`); return}
     zappyIds.push(zappyId)
-    zappyMap[zappyId] = {"name": zappyName, "imgUrl": zappyImgUrl, "value": zappyValue}
-    const response = {"id": zappyId, "name": zappyName, "imgUrl": zappyImgUrl, "value": zappyValue}
+    zappyMap[zappyId] = {"name": zappyName, "value": zappyValue}
+    const response = {"id": zappyId, "name": zappyName, "value": zappyValue}
     res.status(200).send(response)
 }
 
