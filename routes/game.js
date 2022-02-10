@@ -23,6 +23,27 @@ module.exports = app => {
     app.post('/addManyZappys', addManyZappys)
     app.get('/getAllZappys', getAllZappys)
     app.get('/user', user)
+    app.post('/removePlayer', removePlayer)
+}
+
+const removePlayer = (req, res) => {
+    const playerId = req.body.playerId
+    const zapposId = req.headers.customerid ? req.headers.customerid : req.body.customerId
+    if(playerId in players) {
+        const custId = Object.keys(customerPlayerMap).find(key => customerPlayerMap[key] === playerId)
+        delete customerPlayerMap[custId]
+        delete players[playerId]
+        res.status(200).send(`Player ${playerId} has been removed`)
+        return
+    }
+    else if (zapposId in customerPlayerMap) {
+        const id = customerPlayerMap[zapposId]
+        delete customerPlayerMap[zapposId]
+        delete players[id]
+        res.status(200).send(`Player ${id} has been removed`)
+        return
+    }
+    res.status(777).send("Player not found; include playerId or customerId in body")
 }
 
 const user = (req, res) => {
@@ -39,10 +60,18 @@ const user = (req, res) => {
 
 const join = (req, res) => {
     const playerName = req.body.name
-    const zapposId = req.body.customerId
+    if(!playerName) {
+        res.status(678).send("name field is required in body")
+        return
+    }
+    const zapposId = req.headers.customerid ? req.headers.customerid : req.body.customerId
+    if(!zapposId) {
+        res.status(677).send("customerId field is required in header")
+        return
+    }
     const playerId = "p"+Hash(playerName + zapposId).substring(0,10)
     if(playerId in players) {
-        res.status(677).send("Player name already in use")
+        res.status(679).send("Player name already in use")
         return
     }
     players[playerId] = {"name": playerName, "id": playerId, "startTime": new Date().getTime(), "points": 0, "rank": 99999, "collection": {}}
@@ -75,23 +104,31 @@ const find = (req, res) => {
 }
 
 const get = (req, res) => {
-    const playerId = req.headers.playerid
+    const playerId = req.headers.playerid ? req.headers.playerid : req.body.playerId
     const zappyId = req.body.zappyId
+    if(!(zappyId in zappyMap)) {
+        res.status(437).send("zappyId not found")
+    }
     const zappyValue = zappyMap[zappyId].value
     const zappyName = zappyMap[zappyId].name
 
-    players[playerId].points += zappyValue
-    if (zappyId in players[playerId].collection) players[playerId].collection[zappyId].count++
-    else players[playerId].collection[zappyId] = {"name": zappyName, "count": 1}
+    if(playerId in players) {
+        players[playerId].points += zappyValue
+        if (zappyId in players[playerId].collection) players[playerId].collection[zappyId].count++
+        else players[playerId].collection[zappyId] = {"name": zappyName, "count": 1}
 
-    const response = {
-        "zappyValue": zappyValue,
-        "playerPoints": players[playerId].points,
-        "playerRank": Object.keys(players).sort((a, b) => players[b].points - players[a].points).indexOf(playerId)+1,
-        "collection": players[playerId].collection
+        const response = {
+            "zappyValue": zappyValue,
+            "playerPoints": players[playerId].points,
+            "playerRank": Object.keys(players).sort((a, b) => players[b].points - players[a].points).indexOf(playerId)+1,
+            "collection": players[playerId].collection
+        }
+
+        res.status(200).send(response)
     }
-
-    res.status(200).send(response)
+    else {
+        res.status(646).send("playerId not found")
+    }
 }
 
 const top10 = (req, res) => {
