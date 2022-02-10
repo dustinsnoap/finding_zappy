@@ -9,7 +9,7 @@ const zappyMap = {
     // "z780cd": {"name": "rare", "value": 5},
     // "z412a3": {"name": "legendary", "value": 10},
 }
-const zappyIds = ["zade1d", "z48106","z780cd","z412a3"]
+const zappyIds = []
 //
 
 
