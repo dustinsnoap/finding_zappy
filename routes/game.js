@@ -150,18 +150,17 @@ const addZappy = (req, res) => {
 
 const addManyZappys = (req, res) => {
     let newZappys = req.body
-    newZappys = newZappys.filter(zappy => {
-        const id = "z" + Hash(zappy.name + zappy.imgUrl + zappy.value).substring(0,9)
-        if (id in zappyMap) return false
-        return true
-    })
-    newZappys.map(zappy => {
-        console.log(zappy.name)
-        const id = "z" + Hash(zappy.name + zappy.imgUrl + zappy.value).substring(0,9)
-        zappyIds.push(id)
-        zappyMap[id] = {"name": zappy.name, "imgUrl": zappy.imgUrl, "value": zappy.value}
-        zappy.id = id
-        return zappy
+    const zappyNameSet = new Set()
+    Object.keys(zappyMap).forEach(zappy => {zappyNameSet.add(zappyMap[zappy].name)})
+    const response = []
+    newZappys.forEach(zappy => {
+        if(!zappyNameSet.has(zappy.name)) {
+            const id = zappyIds.length
+            zappyIds.push(id)
+            zappyMap[id] = {"name": zappy.name, "value": zappy.value}
+            zappy.id = id
+            response.push(zappy)
+        }
     })
     if(!newZappys.length) {res.status(666).send("Nothing added; find better llamas"); return}
     res.status(200).send(newZappys)
