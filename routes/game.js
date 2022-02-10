@@ -18,6 +18,9 @@ module.exports = app => {
     app.get('/find', find)
     app.post('/catch', get)
     app.get('/top10', top10)
+    app.post('/addZappy', addZappy)
+    app.post('/addManyZappys', addManyZappys)
+    app.get('/getAllZappys', getAllZappys)
 }
 
 const join = (req, res) => {
@@ -40,7 +43,7 @@ const stats = (req, res) => {
 
 const find = (req, res) => {
     const randurl = "zappos.com/" + Hash(Math.random()).substring(0,10)
-    const randid = zappyIds[Math.floor(Math.random()*zappyIds.length)];
+    const randid = zappyIds[Math.floor(Math.random()*zappyIds.length)]
     const response = {
         "url": randurl,
         "zappyId": randid
@@ -61,7 +64,7 @@ const get = (req, res) => {
     const response = {
         "zappyValue": zappyValue,
         "playerPoints": players[playerId].points,
-        "playerRank": 99999,
+        "playerRank": Object.keys(players).sort((a, b) => players[b].points - players[a].points).indexOf(playerId)+1,
         "collection": players[playerId].collection
     }
 
@@ -71,4 +74,40 @@ const get = (req, res) => {
 const top10 = (req, res) => {
     const ranks = Object.keys(players).sort((a, b) => players[b].points - players[a].points).splice(0,10).map(id => { return {"name": players[id].name, "points": players[id].points}})
     res.status(200).send(ranks)
+}
+
+const addZappy = (req, res) => {
+    const zappyName = req.body.name
+    const zappyImgUrl = req.body.imgUrl
+    const zappyValue = req.body.value
+    const zappyId = req.body.zappyId ? req.body.zappyId : "z" + Hash(zappyName + zappyImgUrl + zappyValue).substring(0,9)
+    console.log(zappyId)
+    if(zappyId in zappyMap) {res.status(648).send(`We have enough ${zappyName}'s`); return}
+    zappyIds.push(zappyId)
+    zappyMap[zappyId] = {"name": zappyName, "imgUrl": zappyImgUrl, "value": zappyValue}
+    const response = {"id": zappyId, "name": zappyName, "imgUrl": zappyImgUrl, "value": zappyValue}
+    res.status(200).send(response)
+}
+
+const addManyZappys = (req, res) => {
+    let newZappys = req.body
+    newZappys = newZappys.filter(zappy => {
+        const id = "z" + Hash(zappy.name + zappy.imgUrl + zappy.value).substring(0,9)
+        if (id in zappyMap) return false
+        return true
+    })
+    newZappys.map(zappy => {
+        console.log(zappy.name)
+        const id = "z" + Hash(zappy.name + zappy.imgUrl + zappy.value).substring(0,9)
+        zappyIds.push(id)
+        zappyMap[id] = {"name": zappy.name, "imgUrl": zappy.imgUrl, "value": zappy.value}
+        zappy.id = id
+        return zappy
+    })
+    if(!newZappys.length) {res.status(666).send("Nothing added; find better llamas"); return}
+    res.status(200).send(newZappys)
+}
+
+const getAllZappys = (req, res) => {
+    res.status(200).send(zappyMap)
 }
